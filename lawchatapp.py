@@ -4,6 +4,10 @@ import os
 import faiss
 import numpy as np
 import re
+import gdown
+from pathlib import Path
+import tempfile
+
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -25,6 +29,9 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 GENERAL_API_KEY  = os.getenv("GENERAL_API_KEY")
 FINETUNE_API_KEY = os.getenv("FINETUNE_API_KEY")
 
+GDRIVE_DOCS_ID = "1Kifb92-WhB79vsj6LBYW0OwJXVUEzYbk"
+GDRIVE_EMB_ID  = "19B7KrBd5x7fiOJHodcKq-CkE-0yDCT-g"
+
 if GENERAL_API_KEY is None:
     raise ValueError("❌ GENERAL_API_KEY가 .env에서 로드되지 않았습니다.")
 if FINETUNE_API_KEY is None:
@@ -42,11 +49,33 @@ FINETUNED_MODEL_ID = "ft:gpt-4.1-mini-2025-04-14:dbdbdeep::CiuSaiDu"
 # --------------------------------------------------------------------------
 @st.cache_resource
 def load_docs_and_vectors():
-    with open(r"C:\Users\cheri\OneDrive\문서\새 폴더\계약_documents.pkl", "rb") as f:
+    # OS에 맞는 임시 폴더 안에 contract_data 폴더 생성
+    tmp_root = Path(tempfile.gettempdir())  # 윈도우/리눅스 공통
+    data_dir = tmp_root / "contract_data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    docs_path = data_dir / "계약_documents.pkl"
+    emb_path  = data_dir / "계약_embeddings.pkl"
+
+    # 1) 문서 파일 없으면 구글드라이브에서 다운로드
+    if not docs_path.exists():
+        url = f"https://drive.google.com/uc?id={GDRIVE_DOCS_ID}"
+        gdown.download(url, str(docs_path), quiet=False)
+
+    # 2) 임베딩 파일 없으면 구글드라이브에서 다운로드
+    if not emb_path.exists():
+        url = f"https://drive.google.com/uc?id={GDRIVE_EMB_ID}"
+        gdown.download(url, str(emb_path), quiet=False)
+
+    # 3) 로컬 파일에서 로드
+    with open(docs_path, "rb") as f:
         docs = pickle.load(f)
-    with open(r"C:\Users\cheri\OneDrive\문서\새 폴더\계약_embeddings.pkl", "rb") as f:
+
+    with open(emb_path, "rb") as f:
         vectors = pickle.load(f)
+
     return docs, vectors
+
 
 # --------------------------------------------------------------------------
 # 2. ✅ FAISS 벡터스토어 생성
