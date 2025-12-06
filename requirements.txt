@@ -4,5 +4,6 @@ numpy
 pandas
 python-dotenv
 openai
+langchain
 langchain-openai
 langchain-community
