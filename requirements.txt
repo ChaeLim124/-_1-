@@ -3,8 +3,8 @@ faiss-cpu
 numpy
 pandas
 python-dotenv
-openai
+openai>=1.52.0
 gdown
-langchain==0.2.16
-langchain-openai==0.2.3
-langchain-community==0.2.7
+langchain==0.3.7
+langchain-community==0.3.5
+langchain-openai==0.2.7
